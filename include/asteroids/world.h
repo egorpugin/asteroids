@@ -35,15 +35,15 @@
 
 struct position : v2f {};
 struct velocity : v2f {};
-struct rotation { float x; };
-struct mass { float x; };
-struct radius { float x; };
+struct rotation { float v; };
+struct mass { float v; };
+struct radius { float v; };
 
 struct player {
   /// Whether player ship is accelerating at the moment
-  bool thrust = false;
+  bool thrust;
   /// Counts until moment when player can emit a new bullet
-  float fire_cooldown = 0;
+  float fire_cooldown;
 };
 
 struct asteroid {

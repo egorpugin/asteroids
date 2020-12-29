@@ -21,7 +21,7 @@ velocity random_asteroid_velocity(const velocity &v) {
 
 void spawn_player(entt::registry &registry) {
   const auto entity = registry.create();
-  registry.emplace<player>(entity);
+  registry.emplace<player>(entity, false, 0.f);
   registry.emplace<position>(entity, WORLD_WIDTH * 0.5f, WORLD_HEIGHT * 0.5f);
   registry.emplace<velocity>(entity, 0.f, 0.f);
   registry.emplace<rotation>(entity, 0.f);
@@ -61,9 +61,9 @@ void game::step(float dt) {
   player_view.each([this, &dt](auto &player, auto &pos, auto &vel, auto &rot, auto &mass) mutable {
     // update_player
     if (player.thrust) {
-      float acc = dt * PLAYER_THRUST / mass.x;
-      vel.x += cos(rot.x) * acc;
-      vel.y += sin(rot.x) * acc;
+      float acc = dt * PLAYER_THRUST / mass.v;
+      vel.x += cos(rot.v) * acc;
+      vel.y += sin(rot.v) * acc;
     }
     player.thrust = false;
     if (player.fire_cooldown > 0) {
@@ -72,10 +72,10 @@ void game::step(float dt) {
 
     // apply_events
     if (events.ship_left) {
-      rot.x -= PLAYER_ROTATION_SPEED * dt;
+      rot.v -= PLAYER_ROTATION_SPEED * dt;
     }
     if (events.ship_right) {
-      rot.x += PLAYER_ROTATION_SPEED * dt;
+      rot.v += PLAYER_ROTATION_SPEED * dt;
     }
     if (events.ship_thrust) {
       player.thrust = true;
@@ -87,7 +87,7 @@ void game::step(float dt) {
 
         auto bpos = pos;
         v2f bvel{ 1, 0 };
-        bvel.rotate(rot.x);
+        bvel.rotate(rot.v);
         bvel.scale(BULLET_SPEED);
         bvel += vel;
 
@@ -134,10 +134,10 @@ void game::step(float dt) {
   // with player
   for (auto e1 : col_pl) {
     auto &p1 = registry.get<position>(e1);
-    auto r1 = registry.get<radius>(e1).x;
+    auto r1 = registry.get<radius>(e1).v;
     for (auto e2 : col_a) {
       const auto &p2 = registry.get<position>(e2);
-      auto r2 = registry.get<radius>(e2).x;
+      auto r2 = registry.get<radius>(e2).v;
       float distsq = p1.dist_squared(p2);
       float r = r1 + r2;
       if (distsq < r * r) {
@@ -154,10 +154,10 @@ void game::step(float dt) {
   // with bullet
   for (auto e1 : col_b) {
     const auto &p1 = registry.get<position>(e1);
-    auto r1 = registry.get<radius>(e1).x;
+    auto r1 = registry.get<radius>(e1).v;
     for (auto e2 : col_a) {
       const auto &p2 = registry.get<position>(e2);
-      auto r2 = registry.get<radius>(e2).x;
+      auto r2 = registry.get<radius>(e2).v;
       float distsq = p1.dist_squared(p2);
       float r = r1 + r2;
       if (distsq < r * r) {

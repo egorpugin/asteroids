@@ -68,8 +68,7 @@ int main(int argc, char *argv[]) {
   int flags = 0;
   int initted = Mix_Init(flags);
   if ((initted & flags) != flags) {
-    SDL_Log("Mix_Init: Failed to init!\n");
-    SDL_Log("Mix_Init: %s\n", Mix_GetError());
+    SDL_Log("Mix_Init: Failed to init: %s\n", Mix_GetError());
     return EXIT_FAILURE;
   }
   SCOPE_EXIT{ Mix_Quit(); };
@@ -107,10 +106,9 @@ int main(int argc, char *argv[]) {
   using namespace std::chrono;
   int frame = 0;
   auto last_tick = high_resolution_clock::now();
+  float dt = 0;
   while (true) {
     auto current_tick = high_resolution_clock::now();
-    auto dt = duration_cast<duration<float>>(current_tick - last_tick).count();
-    last_tick = current_tick;
 
     if (process_events(g.events))
       break;
@@ -123,6 +121,9 @@ int main(int argc, char *argv[]) {
     g.render(renderer);
     SDL_RenderPresent(renderer);
 
+    last_tick = high_resolution_clock::now();
+    dt = duration_cast<duration<float>>(last_tick - current_tick).count();
+
     frame++;
     auto fps = 1 / dt;
     if (frame % 2000 == 0) {
@@ -130,12 +131,9 @@ int main(int argc, char *argv[]) {
     }
 
     // skip file print time
-    auto ptick1 = high_resolution_clock::now();
     if (frame % 1000 == 0) {
       ofile << frame << "," << fps << "\n";
     }
-    auto ptick2 = high_resolution_clock::now();
-    last_tick += ptick2 - ptick1;
   }
 
   return EXIT_SUCCESS;

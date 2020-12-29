@@ -25,8 +25,8 @@ void render_lines(SDL_Renderer *renderer, const v2f &pos, float rotation, std::v
     auto p = ps[i];
     p.rotate(rotation);
     p += pos;
-    lines_i[i].x = (int)p.x;
-    lines_i[i].y = (int)p.y;
+    lines_i[i].x = p.x;
+    lines_i[i].y = p.y;
   }
   SDL_RenderDrawLines(renderer, lines_i.data(), n);
 }
@@ -79,7 +79,7 @@ void game::render(SDL_Renderer *renderer) {
     auto &pl = registry.get<player>(entity);
     auto &pos = registry.get<position>(entity);
     auto &rot = registry.get<rotation>(entity);
-    render_player(renderer, pl, pos, rot.x);
+    render_player(renderer, pl, pos, rot.v);
   }
 
   auto asteroid_view = registry.view<asteroid>();
@@ -88,7 +88,7 @@ void game::render(SDL_Renderer *renderer) {
     auto &pos = registry.get<position>(entity);
     auto &rot = registry.get<rotation>(entity);
     auto &rad = registry.get<radius>(entity);
-    render_asteroid(renderer, a, pos, rot.x, rad.x);
+    render_asteroid(renderer, a, pos, rot.v, rad.v);
   }
 
   auto bullet_view = registry.view<bullet>();
