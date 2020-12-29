@@ -3,7 +3,7 @@
 #include <SDL_mixer.h>
 
 sound_resource::sound_resource(const std::filesystem::path &p)
-  : r(Mix_LoadWAV(p.string().c_str()), Mix_FreeChunk) {
+  : r(Mix_LoadWAV((const char *)p.u8string().c_str()), Mix_FreeChunk) {
   if (!r)
     throw std::runtime_error("cannot load: " + p.string());
 }
