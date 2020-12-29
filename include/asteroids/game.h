@@ -18,7 +18,7 @@ struct game {
   input_events events;
   sound_resources sounds;
 
-  game(const std::filesystem::path &root);
+  game(const path &root);
 
   void start();
   void step(float dt);

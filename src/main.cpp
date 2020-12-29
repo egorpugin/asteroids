@@ -1,9 +1,11 @@
 #include "asteroids/game.h"
-#include "asteroids/scope_guard.h"
 #include "asteroids/world.h"
 
+#include <primitives/exceptions.h>
+#include <primitives/templates.h>
 #include <SDL2/SDL.h>
 #include <SDL_mixer.h>
+#include <primitives/sw/main.h> // after sdl
 
 #include <chrono>
 #include <filesystem>
@@ -59,54 +61,44 @@ static bool process_events(input_events &events) {
 }
 
 int main(int argc, char *argv[]) {
-  if (SDL_Init(SDL_INIT_EVERYTHING)) {
-    SDL_Log("SDL init error: %s\n", SDL_GetError());
-    return EXIT_FAILURE;
-  }
+  if (SDL_Init(SDL_INIT_EVERYTHING))
+    throw SW_RUNTIME_ERROR("SDL init error: "s + SDL_GetError());
   SCOPE_EXIT{ SDL_Quit(); };
 
   int flags = 0;
   int initted = Mix_Init(flags);
-  if ((initted & flags) != flags) {
-    SDL_Log("Mix_Init: Failed to init: %s\n", Mix_GetError());
-    return EXIT_FAILURE;
-  }
+  if ((initted & flags) != flags)
+    throw SW_RUNTIME_ERROR("Mix_Init: Failed to init:"s + SDL_GetError());
   SCOPE_EXIT{ Mix_Quit(); };
 
-  if(Mix_OpenAudio(11025, AUDIO_S16SYS, 2, 1024) == -1) {
-    SDL_Log("Mix_OpenAudio: %s\n", Mix_GetError());
-    return EXIT_FAILURE;
-  }
+  if(Mix_OpenAudio(11025, AUDIO_S16SYS, 2, 1024) == -1)
+    throw SW_RUNTIME_ERROR("Mix_OpenAudio: "s + Mix_GetError());
   SCOPE_EXIT{ Mix_CloseAudio(); };
 
   SDL_Window *window = SDL_CreateWindow("Asteroids",
     SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
     WORLD_WIDTH, WORLD_HEIGHT, SDL_WINDOW_SHOWN);
-  if (!window) {
-    SDL_Log("SDL window creation error: %s\n", SDL_GetError());
-    return EXIT_FAILURE;
-  }
+  if (!window)
+    throw SW_RUNTIME_ERROR("SDL window creation error: "s + SDL_GetError());
   SCOPE_EXIT{ SDL_DestroyWindow(window); };
 
   SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-  if (!renderer) {
-    SDL_Log("SDL renderer creation error: %s\n", SDL_GetError());
-    return EXIT_FAILURE;
-  }
+  if (!renderer)
+    throw SW_RUNTIME_ERROR("SDL renderer creation error: "s + SDL_GetError());
   SCOPE_EXIT{ SDL_DestroyRenderer(renderer); };
-
-  game g{ std::filesystem::current_path() };
-  g.start();
 
   std::ofstream ofile("fps.out");
   if (!ofile) {
     SDL_Log("Failed to open fps.out for writing!");
   }
 
+  game g{ fs::current_path() };
+  g.start();
+
   using namespace std::chrono;
   int frame = 0;
-  auto last_tick = high_resolution_clock::now();
   float dt = 0;
+  auto last_tick = high_resolution_clock::now();
   while (true) {
     auto current_tick = high_resolution_clock::now();
 
@@ -136,5 +128,5 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  return EXIT_SUCCESS;
+  return 0;
 }

@@ -6,4 +6,5 @@ void build(Solution &s)
     t += "org.sw.demo.valve.sdl.mixer"_dep;
     t += "org.sw.demo.valve.sdl.main"_dep;
     t += "org.sw.demo.skypjack.entt"_dep;
+    t += "pub.egorpugin.primitives.sw.main"_dep;
 }

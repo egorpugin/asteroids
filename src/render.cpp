@@ -2,7 +2,6 @@
 
 #include "asteroids/world.h"
 
-#include <entt/entt.hpp>
 #include <SDL2/SDL.h>
 
 #define PLAYER_DX (0.5 * PLAYER_RENDER_WIDTH)

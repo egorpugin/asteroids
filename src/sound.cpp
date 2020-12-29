@@ -2,13 +2,13 @@
 
 #include <SDL_mixer.h>
 
-sound_resource::sound_resource(const std::filesystem::path &p)
+sound_resource::sound_resource(const path &p)
   : r(Mix_LoadWAV(p.string().c_str()), Mix_FreeChunk) {
   if (!r)
     throw std::runtime_error("cannot load: " + p.string());
 }
 
-sound_resources::sound_resources(const std::filesystem::path &p)
+sound_resources::sound_resources(const path &p)
   : bang_medium(p / "bangMedium.wav")
   , fire(p / "fire.wav")
   , thrust(p / "thrust.wav") {

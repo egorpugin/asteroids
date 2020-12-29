@@ -1,6 +1,5 @@
 #include <asteroids/game.h>
 
-#include "asteroids/sound.h"
 #include "asteroids/world.h"
 
 #include <SDL2/SDL_stdinc.h>
@@ -41,7 +40,7 @@ void spawn_asteroid(entt::registry &registry, const position &pos, const velocit
 
 } // namespace
 
-game::game(const std::filesystem::path &root)
+game::game(const path &root)
   : sounds{root / "sounds"} {
 }
 
