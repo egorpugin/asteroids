@@ -4,10 +4,10 @@
 
 #include <SDL2/SDL.h>
 
-#define PLAYER_DX (0.5 * PLAYER_RENDER_WIDTH)
-#define PLAYER_DY (0.5 * PLAYER_RENDER_HEIGHT)
+#define PLAYER_DX (0.5 * player::render_width)
+#define PLAYER_DY (0.5 * player::render_height)
 
-#define MAX_EDGES (2 * ASTEROID_EDGES_MAX)
+static const auto max_edges = 2 * asteroid::edges_max;
 
 namespace {
 
@@ -19,7 +19,7 @@ void render_line(SDL_Renderer *renderer, const v2f &pos, float rotation, v2f p1,
 }
 
 void render_lines(SDL_Renderer *renderer, const v2f &pos, float rotation, std::vector<v2f> &ps, int n) {
-  static std::vector<SDL_Point> lines_i(MAX_EDGES);
+  static std::vector<SDL_Point> lines_i(max_edges);
   for (int i = 0; i < n; i++) {
     auto p = ps[i];
     p.rotate(rotation);
@@ -39,7 +39,7 @@ v2f circloid_point(int i, int n, float r) {
 }
 
 void render_circloid(SDL_Renderer *renderer, int n, float rotation, const position &pos, float r) {
-  static std::vector<v2f> lines_f(MAX_EDGES);
+  static std::vector<v2f> lines_f(max_edges);
   for (int i = 0; i < n; i++) {
     lines_f[2 * i] = circloid_point(i, n, r);
     lines_f[2 * i + 1] = circloid_point(i + 1, n, r);

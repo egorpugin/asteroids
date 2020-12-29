@@ -2,8 +2,6 @@
 
 #include "asteroids/world.h"
 
-#include <SDL2/SDL_stdinc.h>
-
 namespace {
 
 int randi(int min, int max) {
@@ -15,7 +13,7 @@ float randf(float min, float max) {
 }
 
 velocity random_asteroid_velocity(const velocity &v) {
-  return { v.x + randf(ASTEROID_VELOCITY_MIN, ASTEROID_VELOCITY_MAX), v.y + randf(ASTEROID_VELOCITY_MIN, ASTEROID_VELOCITY_MAX) };
+  return { v.x + randf(asteroid::velocity_min, asteroid::velocity_max), v.y + randf(asteroid::velocity_min, asteroid::velocity_max) };
 }
 
 void spawn_player(entt::registry &registry) {
@@ -24,13 +22,13 @@ void spawn_player(entt::registry &registry) {
   registry.emplace<position>(entity, WORLD_WIDTH * 0.5f, WORLD_HEIGHT * 0.5f);
   registry.emplace<velocity>(entity, 0.f, 0.f);
   registry.emplace<rotation>(entity, 0.f);
-  registry.emplace<mass>(entity, PLAYER_MASS);
-  registry.emplace<radius>(entity, PLAYER_COLLIDE_RADIUS);
+  registry.emplace<mass>(entity, player::mass);
+  registry.emplace<radius>(entity, player::collide_radius);
 }
 
 void spawn_asteroid(entt::registry &registry, const position &pos, const velocity &vel, mass m, radius r) {
   const auto entity = registry.create();
-  registry.emplace<asteroid>(entity, randi(ASTEROID_EDGES_MIN, ASTEROID_EDGES_MAX));
+  registry.emplace<asteroid>(entity, randi(asteroid::edges_min, asteroid::edges_max));
   registry.emplace<position>(entity, pos);
   registry.emplace<velocity>(entity, random_asteroid_velocity(vel));
   registry.emplace<rotation>(entity, randf(0, 2 * M_PI));
@@ -46,10 +44,10 @@ game::game(const path &root)
 
 void game::start() {
   spawn_player(registry);
-  for (int i = 0; i < ASTEROID_AMOUNT; i++) {
-    float radius_ = randf(ASTEROID_SIZE_MIN, ASTEROID_SIZE_MAX);
+  for (int i = 0; i < asteroid::amount; i++) {
+    float radius_ = randf(asteroid::size_min, asteroid::size_max);
     spawn_asteroid(registry, { randf(0, WORLD_WIDTH), randf(0, WORLD_HEIGHT) }, { 0, 0 }
-                           , { ASTEROID_DENSITY * (float)M_PI * radius_ * radius_ }, { radius_ });
+                           , { asteroid::density * (float)M_PI * radius_ * radius_ }, { radius_ });
   }
 }
 
@@ -60,7 +58,7 @@ void game::step(float dt) {
   player_view.each([this, &dt](auto &player, auto &pos, auto &vel, auto &rot, auto &mass) mutable {
     // update_player
     if (player.thrust) {
-      float acc = dt * PLAYER_THRUST / mass.v;
+      float acc = dt * player::thrust_value / mass.v;
       vel.x += cos(rot.v) * acc;
       vel.y += sin(rot.v) * acc;
     }
@@ -71,10 +69,10 @@ void game::step(float dt) {
 
     // apply_events
     if (events.ship_left) {
-      rot.v -= PLAYER_ROTATION_SPEED * dt;
+      rot.v -= player::rotation_speed * dt;
     }
     if (events.ship_right) {
-      rot.v += PLAYER_ROTATION_SPEED * dt;
+      rot.v += player::rotation_speed * dt;
     }
     if (events.ship_thrust) {
       player.thrust = true;
@@ -87,17 +85,17 @@ void game::step(float dt) {
         auto bpos = pos;
         v2f bvel{ 1, 0 };
         bvel.rotate(rot.v);
-        bvel.scale(BULLET_SPEED);
+        bvel.scale(bullet::speed);
         bvel += vel;
 
         // spawn_bullet
         const auto entity = registry.create();
-        registry.emplace<bullet>(entity, BULLET_LIFE_TIME);
+        registry.emplace<bullet>(entity, bullet::max_lifetime);
         registry.emplace<position>(entity, bpos);
         registry.emplace<velocity>(entity, bvel);
-        registry.emplace<radius>(entity, BULLET_RADIUS);
+        registry.emplace<radius>(entity, bullet::radius);
 
-        player.fire_cooldown = PLAYER_FIRE_COOLDOWN;
+        player.fire_cooldown = player::fire_cooldown_max;
       }
     }
   });
@@ -143,7 +141,7 @@ void game::step(float dt) {
         // respawn player
         sounds.play_sound(sounds.bang_medium, 2, 0.3);
         p1 = { WORLD_WIDTH * 0.5f, WORLD_HEIGHT * 0.5f };
-        registry.get<player>(e1).fire_cooldown = PLAYER_FIRE_COOLDOWN;
+        registry.get<player>(e1).fire_cooldown = player::fire_cooldown_max;
         registry.get<velocity>(e1) = { 0.f, 0.f };
         registry.get<rotation>(e1) = { 0.f };
         break;
@@ -166,10 +164,10 @@ void game::step(float dt) {
           registry.destroy(e1);
         // spawn asteroid cracks
         float r = 0.5 * r2;
-        if (r >= ASTEROID_SIZE_MIN) {
+        if (r >= asteroid::size_min) {
           auto &pos = p2;
           auto &vel = registry.get<velocity>(e2);
-          float m = ASTEROID_DENSITY * M_PI * r * r;
+          float m = asteroid::density * M_PI * r * r;
           spawn_asteroid(registry, pos, vel, { m }, { r });
           spawn_asteroid(registry, pos, vel, { m }, { r });
         }
