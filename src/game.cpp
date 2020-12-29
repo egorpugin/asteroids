@@ -3,58 +3,9 @@
 #include "asteroids/sound.h"
 #include "asteroids/world.h"
 
-#include <SDL2/SDL.h>
+#include <SDL2/SDL_stdinc.h>
 
 namespace {
-
-bool process_events(input_events &events) {
-  SDL_Event e;
-  while (SDL_PollEvent(&e)) {
-    if (e.type == SDL_QUIT) {
-      return true;
-    }
-    else if (e.type == SDL_KEYDOWN) {
-      if (e.key.keysym.sym == SDLK_ESCAPE) {
-        return true;
-      }
-      else if (e.key.keysym.sym == SDLK_UP) {
-        events.ship_thrust = true;
-        return false;
-      }
-      else if (e.key.keysym.sym == SDLK_LEFT) {
-        events.ship_left = true;
-        return false;
-      }
-      else if (e.key.keysym.sym == SDLK_RIGHT) {
-        events.ship_right = true;
-        return false;
-      }
-      else if (e.key.keysym.sym == SDLK_SPACE) {
-        events.ship_fire = true;
-        return false;
-      }
-    }
-    else if (e.type == SDL_KEYUP) {
-      if (e.key.keysym.sym == SDLK_UP) {
-        events.ship_thrust = false;
-        return false;
-      }
-      else if (e.key.keysym.sym == SDLK_LEFT) {
-        events.ship_left = false;
-        return false;
-      }
-      else if (e.key.keysym.sym == SDLK_RIGHT) {
-        events.ship_right = false;
-        return false;
-      }
-      else if (e.key.keysym.sym == SDLK_SPACE) {
-        events.ship_fire = false;
-        return false;
-      }
-    }
-  }
-  return false;
-}
 
 int randi(int min, int max) {
   return min + (int)((float)rand() / (RAND_MAX / (float)(max - min)));
@@ -88,54 +39,18 @@ void spawn_asteroid(entt::registry &registry, const position &pos, const velocit
   registry.emplace<radius>(entity, r);
 }
 
-void spawn(entt::registry &registry) {
-  spawn_player(registry);
-  for (int i = 0; i < ASTEROID_AMOUNT; i++) {
-    float radius_ = randf(ASTEROID_SIZE_MIN, ASTEROID_SIZE_MAX);
-    spawn_asteroid(registry, {randf(0, WORLD_WIDTH), randf(0, WORLD_HEIGHT)}, { 0, 0 }
-      , { ASTEROID_DENSITY * (float)M_PI * radius_ * radius_ }, { radius_ });
-  }
-}
-
 } // namespace
 
 game::game(const std::filesystem::path &root)
   : sounds{root / "sounds"} {
 }
 
-void game::run(SDL_Renderer *renderer) {
-  spawn(registry);
-
-  float dt = 0;
-  clock_t lastTick = 0;
-  int i = 0;
-  while (true) {
-    bool quit = process_events(events);
-    if (quit) break;
-
-    clock_t currentTick = clock();
-    dt = (float)(currentTick - lastTick) / CLOCKS_PER_SEC;
-    lastTick = currentTick;
-
-    step(dt);
-
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderClear(renderer);
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    render(renderer);
-    SDL_RenderPresent(renderer);
-
-    i += 1;
-    float fps = 1 / dt;
-    if (i % 2000 == 0) {
-      SDL_Log("FPS: %f", fps);
-    }
-    clock_t ptick1 = clock();
-    /*if (i % 1000 == 0 && fps_file) {
-      fprintf(fps_file, "%i,%f\n", i, fps);
-    }*/
-    clock_t ptick2 = clock();
-    lastTick += ptick2 - ptick1;
+void game::start() {
+  spawn_player(registry);
+  for (int i = 0; i < ASTEROID_AMOUNT; i++) {
+    float radius_ = randf(ASTEROID_SIZE_MIN, ASTEROID_SIZE_MAX);
+    spawn_asteroid(registry, { randf(0, WORLD_WIDTH), randf(0, WORLD_HEIGHT) }, { 0, 0 }
+                           , { ASTEROID_DENSITY * (float)M_PI * radius_ * radius_ }, { radius_ });
   }
 }
 
@@ -220,7 +135,6 @@ void game::step(float dt) {
   for (auto e1 : col_pl) {
     auto &p1 = registry.get<position>(e1);
     auto r1 = registry.get<radius>(e1).x;
-    bool collide = false;
     for (auto e2 : col_a) {
       const auto &p2 = registry.get<position>(e2);
       auto r2 = registry.get<radius>(e2).x;
@@ -230,19 +144,17 @@ void game::step(float dt) {
         // respawn player
         sounds.play_sound(sounds.bang_medium, 2, 0.3);
         p1 = { WORLD_WIDTH * 0.5f, WORLD_HEIGHT * 0.5f };
+        registry.get<player>(e1).fire_cooldown = PLAYER_FIRE_COOLDOWN;
         registry.get<velocity>(e1) = { 0.f, 0.f };
         registry.get<rotation>(e1) = { 0.f };
-        collide = true;
+        break;
       }
     }
-    if (collide)
-      break;
   }
   // with bullet
   for (auto e1 : col_b) {
     const auto &p1 = registry.get<position>(e1);
     auto r1 = registry.get<radius>(e1).x;
-    bool collide = false;
     for (auto e2 : col_a) {
       const auto &p2 = registry.get<position>(e2);
       auto r2 = registry.get<radius>(e2).x;
@@ -263,10 +175,8 @@ void game::step(float dt) {
           spawn_asteroid(registry, pos, vel, { m }, { r });
         }
         registry.destroy(e2);
-        collide = true;
+        break;
       }
     }
-    if (collide)
-      break;
   }
 }

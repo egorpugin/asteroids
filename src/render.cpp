@@ -39,13 +39,13 @@ v2f circloid_point(int i, int n, float r) {
   };
 }
 
-void render_circloid(SDL_Renderer *renderer, int n, float a0, const position &pos, float r) {
+void render_circloid(SDL_Renderer *renderer, int n, float rotation, const position &pos, float r) {
   static std::vector<v2f> lines_f(MAX_EDGES);
   for (int i = 0; i < n; i++) {
     lines_f[2 * i] = circloid_point(i, n, r);
     lines_f[2 * i + 1] = circloid_point(i + 1, n, r);
   }
-  render_lines(renderer, pos, a0, lines_f, 2 * n);
+  render_lines(renderer, pos, rotation, lines_f, 2 * n);
 }
 
 void render_asteroid(SDL_Renderer *renderer, const asteroid &a, const position &pos, float rotation, float radius) {

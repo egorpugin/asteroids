@@ -5,7 +5,58 @@
 #include <SDL2/SDL.h>
 #include <SDL_mixer.h>
 
+#include <chrono>
 #include <filesystem>
+#include <fstream>
+
+static bool process_events(input_events &events) {
+  SDL_Event e;
+  while (SDL_PollEvent(&e)) {
+    if (e.type == SDL_QUIT) {
+      return true;
+    }
+    else if (e.type == SDL_KEYDOWN) {
+      if (e.key.keysym.sym == SDLK_ESCAPE) {
+        return true;
+      }
+      else if (e.key.keysym.sym == SDLK_UP) {
+        events.ship_thrust = true;
+        return false;
+      }
+      else if (e.key.keysym.sym == SDLK_LEFT) {
+        events.ship_left = true;
+        return false;
+      }
+      else if (e.key.keysym.sym == SDLK_RIGHT) {
+        events.ship_right = true;
+        return false;
+      }
+      else if (e.key.keysym.sym == SDLK_SPACE) {
+        events.ship_fire = true;
+        return false;
+      }
+    }
+    else if (e.type == SDL_KEYUP) {
+      if (e.key.keysym.sym == SDLK_UP) {
+        events.ship_thrust = false;
+        return false;
+      }
+      else if (e.key.keysym.sym == SDLK_LEFT) {
+        events.ship_left = false;
+        return false;
+      }
+      else if (e.key.keysym.sym == SDLK_RIGHT) {
+        events.ship_right = false;
+        return false;
+      }
+      else if (e.key.keysym.sym == SDLK_SPACE) {
+        events.ship_fire = false;
+        return false;
+      }
+    }
+  }
+  return false;
+}
 
 int main(int argc, char *argv[]) {
   if (SDL_Init(SDL_INIT_EVERYTHING)) {
@@ -46,13 +97,46 @@ int main(int argc, char *argv[]) {
   SCOPE_EXIT{ SDL_DestroyRenderer(renderer); };
 
   game g{ std::filesystem::current_path() };
-  g.run(renderer);
+  g.start();
 
-  /*FILE *fps_file = fopen("./fps.out", "w");
-  if (!fps_file) {
-    SDL_Log("Failed to open ./fps.out for writing!");
-  }*/
-  //if (fps_file) fclose(fps_file);
+  std::ofstream ofile("fps.out");
+  if (!ofile) {
+    SDL_Log("Failed to open fps.out for writing!");
+  }
+
+  using namespace std::chrono;
+  int frame = 0;
+  auto last_tick = high_resolution_clock::now();
+  while (true) {
+    auto current_tick = high_resolution_clock::now();
+    auto dt = duration_cast<duration<float>>(current_tick - last_tick).count();
+    last_tick = current_tick;
+
+    if (process_events(g.events))
+      break;
+
+    g.step(dt);
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    g.render(renderer);
+    SDL_RenderPresent(renderer);
+
+    frame++;
+    auto fps = 1 / dt;
+    if (frame % 2000 == 0) {
+      SDL_Log("FPS: %f", fps);
+    }
+
+    // skip file print time
+    auto ptick1 = high_resolution_clock::now();
+    if (frame % 1000 == 0) {
+      ofile << frame << "," << fps << "\n";
+    }
+    auto ptick2 = high_resolution_clock::now();
+    last_tick += ptick2 - ptick1;
+  }
 
   return EXIT_SUCCESS;
 }

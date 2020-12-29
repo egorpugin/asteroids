@@ -4,8 +4,6 @@
 
 #include <entt/entt.hpp>
 
-struct SDL_Renderer;
-
 /// Only object that is controlled by the player is space ship. We consider
 /// input events to be "sticky". Ship fires all time while key is down.
 struct input_events {
@@ -22,9 +20,7 @@ struct game {
 
   game(const std::filesystem::path &root);
 
-  void run(SDL_Renderer *renderer);
-
-private:
+  void start();
   void step(float dt);
-  void render(SDL_Renderer *renderer);
+  void render(struct SDL_Renderer *renderer);
 };

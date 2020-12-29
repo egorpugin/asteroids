@@ -1,8 +1,6 @@
 #include "asteroids/sound.h"
-#include <SDL2/SDL.h>
 
-#include <stdio.h>
-#include <string.h>
+#include <SDL_mixer.h>
 
 sound_resource::sound_resource(const std::filesystem::path &p)
   : r(Mix_LoadWAV(p.string().c_str()), Mix_FreeChunk) {

@@ -1,12 +1,10 @@
 #pragma once
 
-#include "SDL_mixer.h"
-
 #include <filesystem>
 #include <memory>
 
 struct sound_resource {
-  std::unique_ptr<Mix_Chunk, void(*)(Mix_Chunk*)> r;
+  std::unique_ptr<struct Mix_Chunk, void(*)(struct Mix_Chunk*)> r;
 
   sound_resource(const std::filesystem::path &);
 };
