@@ -1,8 +1,4 @@
-/**
-  Handle sound states and cooldowns.
-*/
-#ifndef ASTEROIDS_SOUND_H
-#define ASTEROIDS_SOUND_H
+#pragma once
 
 #include "SDL_mixer.h"
 
@@ -31,5 +27,3 @@ struct sound_resources {
   /// Play sound at given channel and setup cooldown
   void play_sound(const sound_resource &sound, int channel, float cooldown);
 };
-
-#endif /* ASTEROIDS_SOUND_H */

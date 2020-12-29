@@ -45,8 +45,8 @@ int main(int argc, char *argv[]) {
   }
   SCOPE_EXIT{ SDL_DestroyRenderer(renderer); };
 
-  game g{ std::filesystem::current_path(), *renderer };
-  g.run();
+  game g{ std::filesystem::current_path() };
+  g.run(renderer);
 
   /*FILE *fps_file = fopen("./fps.out", "w");
   if (!fps_file) {

@@ -1,5 +1,4 @@
-#ifndef ASTEROIDS_SCOPE_GUARD_H
-#define ASTEROIDS_SCOPE_GUARD_H
+#pragma once
 
 #include <functional>
 
@@ -42,5 +41,3 @@ namespace detail {
 
 #define SCOPE_EXIT_NAMED \
     ::detail::scope_guard_on_exit() + [&]()
-
-#endif

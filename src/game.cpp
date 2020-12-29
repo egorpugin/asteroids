@@ -1,12 +1,9 @@
 #include <asteroids/game.h>
 
-#include "asteroids/component/asteroid.h"
-#include "asteroids/component/bullet.h"
-#include "asteroids/component/player.h"
-#include "asteroids/events.h"
 #include "asteroids/sound.h"
-#include "asteroids/render.h"
 #include "asteroids/world.h"
+
+#include <SDL2/SDL.h>
 
 namespace {
 
@@ -102,11 +99,11 @@ void spawn(entt::registry &registry) {
 
 } // namespace
 
-game::game(const std::filesystem::path &root, SDL_Renderer &renderer)
-  : sounds{root / "sounds"}, renderer(&renderer) {
+game::game(const std::filesystem::path &root)
+  : sounds{root / "sounds"} {
 }
 
-void game::run() {
+void game::run(SDL_Renderer *renderer) {
   spawn(registry);
 
   float dt = 0;
@@ -120,14 +117,14 @@ void game::run() {
     dt = (float)(currentTick - lastTick) / CLOCKS_PER_SEC;
     lastTick = currentTick;
 
-    sounds.update_sound_cooldowns(dt);
     step(dt);
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    render(renderer, registry);
+    render(renderer);
     SDL_RenderPresent(renderer);
+
     i += 1;
     float fps = 1 / dt;
     if (i % 2000 == 0) {
@@ -143,6 +140,8 @@ void game::run() {
 }
 
 void game::step(float dt) {
+  sounds.update_sound_cooldowns(dt);
+
   auto player_view = registry.view<player, position, velocity, rotation, mass>();
   player_view.each([this, &dt](auto &player, auto &pos, auto &vel, auto &rot, auto &mass) mutable {
     // update_player
@@ -213,10 +212,11 @@ void game::step(float dt) {
     if (p.y > WORLD_HEIGHT) p.y -= WORLD_HEIGHT;
   }
 
-  // collisions with player or bullet
+  // collisions
   auto col_pl = registry.view<player, position, radius>();
   auto col_a = registry.view<asteroid, position, radius>();
   auto col_b = registry.view<bullet, position, radius>();
+  // with player
   for (auto e1 : col_pl) {
     auto &p1 = registry.get<position>(e1);
     auto r1 = registry.get<radius>(e1).x;
@@ -238,6 +238,7 @@ void game::step(float dt) {
     if (collide)
       break;
   }
+  // with bullet
   for (auto e1 : col_b) {
     const auto &p1 = registry.get<position>(e1);
     auto r1 = registry.get<radius>(e1).x;
