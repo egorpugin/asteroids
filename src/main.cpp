@@ -1,5 +1,4 @@
 #include "asteroids/game.h"
-#include "asteroids/scope_guard.h"
 #include "asteroids/world.h"
 
 #include <SDL2/SDL.h>
@@ -8,6 +7,16 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <functional>
+
+class scope_guard {
+  using exit_func = std::function<void()>;
+public:
+  scope_guard(exit_func f) : f(f) {}
+  ~scope_guard() { if (f) f(); }
+private:
+  exit_func f;
+};
 
 static bool process_events(input_events &events) {
   SDL_Event e;
@@ -63,7 +72,7 @@ int main(int argc, char *argv[]) {
     SDL_Log("SDL init error: %s\n", SDL_GetError());
     return EXIT_FAILURE;
   }
-  SCOPE_EXIT{ SDL_Quit(); };
+  scope_guard sg1{ [] { SDL_Quit(); } };
 
   int flags = 0;
   int initted = Mix_Init(flags);
@@ -71,13 +80,13 @@ int main(int argc, char *argv[]) {
     SDL_Log("Mix_Init: Failed to init: %s\n", Mix_GetError());
     return EXIT_FAILURE;
   }
-  SCOPE_EXIT{ Mix_Quit(); };
+  scope_guard sg2{ [] { Mix_Quit(); } };
 
   if(Mix_OpenAudio(11025, AUDIO_S16SYS, 2, 1024) == -1) {
     SDL_Log("Mix_OpenAudio: %s\n", Mix_GetError());
     return EXIT_FAILURE;
   }
-  SCOPE_EXIT{ Mix_CloseAudio(); };
+  scope_guard sg3{ [] { Mix_CloseAudio(); } };
 
   SDL_Window *window = SDL_CreateWindow("Asteroids",
     SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -86,14 +95,14 @@ int main(int argc, char *argv[]) {
     SDL_Log("SDL window creation error: %s\n", SDL_GetError());
     return EXIT_FAILURE;
   }
-  SCOPE_EXIT{ SDL_DestroyWindow(window); };
+  scope_guard sg4{ [window] { SDL_DestroyWindow(window); } };
 
   SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
   if (!renderer) {
     SDL_Log("SDL renderer creation error: %s\n", SDL_GetError());
     return EXIT_FAILURE;
   }
-  SCOPE_EXIT{ SDL_DestroyRenderer(renderer); };
+  scope_guard sg5{ [renderer] { SDL_DestroyRenderer(renderer); } };
 
   game g{ std::filesystem::current_path() };
   g.start();
